@@ -16,7 +16,7 @@ private:
 			denumenator /= gcd;
 		}
 
-		if (numenator > 0 && denumenator < 0 || numenator < 0 && denumenator < 0) {
+		if ((numenator > 0 && denumenator < 0) || (numenator < 0 && denumenator < 0)) {
 			numenator *= -1;
 			denumenator *= -1;
 		}

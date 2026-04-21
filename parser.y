@@ -18,40 +18,62 @@ extern int yylex();
 %token X PLUS MINUS MUL DIV POWER OPENBACKET CLOSEBACKET EOL
 
 %left PLUS MINUS
-%left MUL DIV
+%left MUL DIV IMPLICIT_MUL X OPENBACKET
 %right POWER
 
 %%
 input:
-	expr EOL {YYACCEPT;};
+	expr EOL {YYACCEPT;}
+	;
+
+bracket_expr:
+	OPENBACKET expr CLOSEBACKET
+	;
+
+x_token:
+	X {globalEmitter->pushX();}
+	;
+num:
+	NUM {globalEmitter->pushNumber($1);}
+	;
+
 expr:
 	expr PLUS expr {globalEmitter->addition();} |
 	expr MINUS expr {globalEmitter->substraction();} |
 	expr MUL expr {globalEmitter->multiplication();} |
 	expr DIV expr {globalEmitter->division();} |
-	NUM X {
-		globalEmitter->pushNumber($1);
-		globalEmitter->pushX();
-		globalEmitter->multiplication();
-	} |
-	NUM OPENBACKET expr CLOSEBACKET {
-		globalEmitter->pushNumber($1);
-		globalEmitter->multiplication();
-	} | 
-	expr POWER expr {globalEmitter->power();} | 
-	OPENBACKET expr CLOSEBACKET | 
-	MINUS expr %prec POWER {
+	expr POWER expr {globalEmitter->power();} |
+	
+	MINUS expr %prec IMPLICIT_MUL {
 		globalEmitter->pushNumber(-1);
 		globalEmitter->multiplication();
 	} |
-	PLUS expr %prec POWER |
-	OPENBACKET expr CLOSEBACKET OPENBACKET expr CLOSEBACKET {globalEmitter->multiplication();} |
-	NUM {globalEmitter->pushNumber($1);} |
-	X {globalEmitter->pushX();}
+	PLUS expr %prec IMPLICIT_MUL |
+	
+	expr x_token %prec IMPLICIT_MUL {
+		globalEmitter->multiplication();
+	} |
+	expr bracket_expr %prec IMPLICIT_MUL {
+		globalEmitter->multiplication();
+	} |
+	
 
-;
+	expr x_token POWER expr %prec POWER {
+		globalEmitter->power();
+		globalEmitter->multiplication();
+	} |
+	expr bracket_expr POWER expr %prec POWER {
+		globalEmitter->power();
+		globalEmitter->multiplication();
+	} |
+
+	bracket_expr |
+	num |
+	x_token
+	;
 %%
 
 void yyerror(const char *s) {
 	std::cerr << "Parser error: " << s << "\n";
 }
+

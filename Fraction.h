@@ -64,14 +64,12 @@ private:
 
 	Polynom dividePolynoms(Polynom divisible, Polynom divider, RETURNTYPEDIVIDEPOLYNOMS returnType) {
 		int orderPower = divisible.crbegin()->first - divider.crbegin()->first;
-		Rational diffCoefficient = divisible.cbegin()->second / divider.crbegin()->second;
 
 		Polynom tempNumenator = divisible;
 		addZeros(tempNumenator);
 		Polynom diffNumenator;
 		Polynom resultNumenator;
 		std::pair<int, Rational> multiplier;
-		auto it = tempNumenator.rbegin();
 		for (int i = orderPower; i >= 0; --i) {
 			multiplier.first = i;
 			multiplier.second = std::next(tempNumenator.rbegin(), orderPower - i)->second / divider.crbegin()->second;
