@@ -10,8 +10,8 @@ extern int yylex();
 %}
 
 %union {
-	int num_token;
-	int value;
+	long long num_token;
+	long long value;
 }
 
 %token <num_token> NUM

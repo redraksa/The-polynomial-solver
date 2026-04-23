@@ -21,7 +21,7 @@ private:
 		}
 	}
 public:
-	MixedFraction(int power, int coefficient) : remainder(0, 0) {
+	MixedFraction(long long power, long long coefficient) : remainder(0, 0) {
 		whole[power] = coefficient;
 	}
 
@@ -67,7 +67,7 @@ public:
 
 		for (auto& member1 : whole) {
 			for (auto& member2 : other.whole) {
-				std::pair<int, Rational> resultMember = member2;
+				std::pair<long long, Rational> resultMember = member2;
 				resultMember.first += member1.first;
 				resultMember.second *= member1.second;
 				tempWhole[resultMember.first] += resultMember.second;
@@ -133,9 +133,9 @@ public:
 		return !remainder.isZero();
 	}
 
-	int getFreeMember() {
+	long long getFreeMember() {
 		if (whole.find(0) != whole.end()) {
-			return whole[0];
+			return static_cast<long long>(whole[0]);
 		}
 		else {
 			return 0;

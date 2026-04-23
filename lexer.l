@@ -1,7 +1,8 @@
 %{
 #include <iostream>
 #include <string>
-#include "parser.tab.h"
+#include <stdexcept>
+#include "parser.tab.hpp"
 %}
 
 %option noyywrap
@@ -9,21 +10,31 @@
 %option noinput
 
 %%
-[ \t]	;
-\n	{return EOL;}
-[1-9][0-9]*|0	{
-			yylval.value = std::stoi(yytext);
-			return NUM;
+[ \t]		;
+\n		{
+			return EOL;
 		}
-"x"	{return X;} 
-"+"	{return PLUS;}
-"-" 	{return MINUS;}
-"*"	{return MUL;}
-"/"	{return DIV;}
-"^"	{return POWER;}
-"("	{return OPENBACKET;}
-")"	{return CLOSEBACKET;}
+[1-9][0-9]*|0	{
+			try {
+				yylval.value = std::stoll(yytext);
+				return NUM;
+			}
+			catch (const std::out_of_range& e) {
+				throw std::out_of_range("Number is too large: " + std::string(yytext));
+			}
+			catch (const std::exception& e) {
+				throw std::runtime_error("Invalid number: " + std::string(yytext));
+			}
+		}
+"x"		{return X;} 
+"+"		{return PLUS;}
+"-" 		{return MINUS;}
+"*"		{return MUL;}
+"/"		{return DIV;}
+"^"		{return POWER;}
+"("		{return OPENBACKET;}
+")"		{return CLOSEBACKET;}
 
-.	{std::cerr << "Unknown character: " << yytext << "\n";}
+.		{std::cerr << "Unknown character: " << yytext << "\n";}
 
 %%

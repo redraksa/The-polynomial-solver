@@ -1,13 +1,14 @@
 TARGET = translator
 
 CXX = g++
-CXXFLAGS = -Wall -std=c++17
+CXXFLAGS = -Wall -std=c++17 -MMD -MP
 
 BISON = bison
 FLEX = flex
 
 SRPC = SimpleParser.cpp lex.yy.cpp parser.tab.cpp Emitter.cpp ResultPrinter.cpp MixedFraction.cpp Fraction.cpp Rational.cpp
 OBJS = $(SRPC:.cpp=.o)
+DEPS = $(OBJS:.o=.d)
 
 all: $(TARGET)
 
@@ -24,4 +25,6 @@ lex.yy.cpp: lexer.l parser.tab.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TARGET) *.o lex.yy.cpp parser.tab.cpp parser.tab.hpp
+	rm -f $(TARGET) *.o *.d lex.yy.cpp parser.tab.cpp parser.tab.hpp
+
+-include $(DEPS)

@@ -1,4 +1,6 @@
 *.exe
-*.yy.c
+*.yy.*
 *.tab.*
 .git/
+*.o
+*.d

@@ -67,7 +67,7 @@ public:
 			int power = firstFraction.getFreeMember();
 			if (power > 0) {
 				MixedFraction multi = polynomials.top();
-				for (int i = 1; i < power; ++i) {
+				for (long long i = 1; i < power; ++i) {
 					polynomials.top().multiplication(multi);
 				}
 			}
@@ -75,7 +75,7 @@ public:
 				MixedFraction divider = polynomials.top();
 				polynomials.pop();
 				polynomials.push({ 0,1 });
-				for (int i = 0; i > power; --i) {
+				for (long long i = 0; i > power; --i) {
 					polynomials.top().division(divider);
 				}
 			}
@@ -93,7 +93,7 @@ public:
 		polynomials.push({ 1, 1 });
 	}
 
-	void pushNumber(int num) {
+	void pushNumber(long long num) {
 		polynomials.push({ 0, num });
 	}
 

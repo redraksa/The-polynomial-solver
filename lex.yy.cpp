@@ -452,10 +452,11 @@ char *yytext;
 #line 2 "lexer.l"
 #include <iostream>
 #include <string>
-#include "parser.tab.h"
-#line 456 "lex.yy.cpp"
+#include <stdexcept>
+#include "parser.tab.hpp"
+#line 457 "lex.yy.cpp"
 #define YY_NO_INPUT 1
-#line 458 "lex.yy.cpp"
+#line 459 "lex.yy.cpp"
 
 #define INITIAL 0
 
@@ -670,9 +671,9 @@ YY_DECL
 		}
 
 	{
-#line 11 "lexer.l"
+#line 12 "lexer.l"
 
-#line 675 "lex.yy.cpp"
+#line 676 "lex.yy.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -731,74 +732,84 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 12 "lexer.l"
+#line 13 "lexer.l"
 ;
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 13 "lexer.l"
-{return EOL;}
+#line 14 "lexer.l"
+{
+			return EOL;
+		}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 14 "lexer.l"
+#line 17 "lexer.l"
 {
-			yylval.value = std::stoi(yytext);
-			return NUM;
+			try {
+				yylval.value = std::stoll(yytext);
+				return NUM;
+			}
+			catch (const std::out_of_range& e) {
+				throw std::out_of_range("Number is too large: " + std::string(yytext));
+			}
+			catch (const std::exception& e) {
+				throw std::runtime_error("Invalid number: " + std::string(yytext));
+			}
 		}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 18 "lexer.l"
+#line 29 "lexer.l"
 {return X;} 
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 19 "lexer.l"
+#line 30 "lexer.l"
 {return PLUS;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 20 "lexer.l"
+#line 31 "lexer.l"
 {return MINUS;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 21 "lexer.l"
+#line 32 "lexer.l"
 {return MUL;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 22 "lexer.l"
+#line 33 "lexer.l"
 {return DIV;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 23 "lexer.l"
+#line 34 "lexer.l"
 {return POWER;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 24 "lexer.l"
+#line 35 "lexer.l"
 {return OPENBACKET;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 25 "lexer.l"
+#line 36 "lexer.l"
 {return CLOSEBACKET;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 27 "lexer.l"
+#line 38 "lexer.l"
 {std::cerr << "Unknown character: " << yytext << "\n";}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 29 "lexer.l"
+#line 40 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 801 "lex.yy.cpp"
+#line 812 "lex.yy.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1766,6 +1777,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 29 "lexer.l"
+#line 40 "lexer.l"
 
 

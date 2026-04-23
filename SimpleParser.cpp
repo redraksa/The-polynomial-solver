@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include "Emitter.h"
 #include "ResultPrinter.h"
-#include "parser.tab.h"
+#include "parser.tab.hpp"
 
 Emitter* globalEmitter = nullptr;
 
@@ -30,11 +30,19 @@ int main()
             std::cout << "Failure. Syntax error";
         }
     }
+    catch (const std::out_of_range& e) {
+	std::cerr << "Value error: " << e.what() << "\n";
+	return 1;
+    }
     catch (const std::exception& e)
     {
         std::cerr << "Runtime error: " << e.what() << "\n";
+	return 1;
     }
-
+    catch (...) {
+	std::cerr << "Uknown error!\n";
+	return 1;
+    }
     return 0;
 }
 
