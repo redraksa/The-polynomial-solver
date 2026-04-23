@@ -1,5 +1,5 @@
 .vs/
-SimpleParser/x64/
+./SimpleParser
 x64/
 *.vcxproj
 *.vcxproj.*
