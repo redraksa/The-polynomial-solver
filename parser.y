@@ -33,16 +33,26 @@ bracket_expr:
 x_token:
 	X {globalEmitter->pushX();}
 	;
+
 num:
 	NUM {globalEmitter->pushNumber($1);}
 	;
+
+atom:
+    num |
+    bracket_expr |
+    x_token
+    ;
+power:
+    expr POWER atom {globalEmitter->power();}
+    ;
 
 expr:
 	expr PLUS expr {globalEmitter->addition();} |
     expr MINUS expr {globalEmitter->substraction();} |
     expr MUL expr {globalEmitter->multiplication();} |
     expr DIV expr {globalEmitter->division();} |
-    expr POWER expr {globalEmitter->power();} |
+    power |
 
     MINUS expr %prec IMPLICIT_MUL {
     	globalEmitter->pushNumber(-1);
@@ -53,6 +63,9 @@ expr:
     num x_token %prec IMPLICIT_MUL {
     	globalEmitter->multiplication();
     } |
+    power x_token %prec IMPLICIT_MUL {
+    	globalEmitter->multiplication();
+    } |
     bracket_expr x_token %prec IMPLICIT_MUL {
         globalEmitter->multiplication();
     } |
@@ -61,17 +74,20 @@ expr:
     } |
 
 
-    num x_token POWER expr %prec POWER {
+    num x_token POWER atom %prec POWER {
         globalEmitter->power();
         globalEmitter->multiplication();
     } |
-
-    bracket_expr x_token POWER expr %prec POWER {
+    power x_token POWER atom %prec POWER {
+        globalEmitter->power();
+        globalEmitter->multiplication();
+    } |
+    bracket_expr x_token POWER atom %prec POWER {
         globalEmitter->power();
         globalEmitter->multiplication();
 
     } |
-    expr bracket_expr POWER expr %prec POWER {
+    expr bracket_expr POWER atom %prec POWER {
         globalEmitter->power();
         globalEmitter->multiplication();
     } |
