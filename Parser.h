@@ -58,6 +58,10 @@ private:
             pushToken(nextLexem.value);
             pushToken(nextLexem);
             match(X);
+
+            if (nextLexem.token == X) {
+                throw std::runtime_error(std::string("Impicit multiplication isn't supported for X X"));
+            }
         }
         else if (nextLexem.token == OPENBACKET) {
             match(OPENBACKET);
