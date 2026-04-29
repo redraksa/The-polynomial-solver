@@ -1,3 +1,23 @@
+%code requires {
+        typedef enum {
+                TYPE_NUM,
+                TYPE_X,
+                TYPE_BACKET,
+                TYPE_UPLUS,
+                TYPE_UMINUS
+        } BoundaryType;
+
+        typedef struct Node {
+                BoundaryType left_type;
+                BoundaryType right_type;
+                std::string text;
+        } Node;
+
+        extern Node* create_node(const char *s);
+
+}
+
+
 %{
 #include <iostream>
 #include <string>
@@ -7,99 +27,172 @@ extern Emitter* globalEmitter;
 
 void yyerror(const char *s);
 extern int yylex();
+
 %}
 
 %union {
-	long long num_token;
-	long long value;
+        Node* node;
+        long long value;
 }
 
-%token <num_token> NUM
+%destructor { delete $$; } <node>
+
+%type <node> input unar_expr expr term power primary
+%token <value> NUM;
 %token X PLUS MINUS MUL DIV POWER OPENBACKET CLOSEBACKET EOL
 
 %left PLUS MINUS
-%left MUL DIV IMPLICIT_MUL X OPENBACKET
+%left MUL DIV IMPLICIT_MUL
 %right POWER
 
 %%
 input:
-	expr EOL {YYACCEPT;}
-	;
+        unar_expr EOL {
+                $$ = $1;
+                delete $1;
+                YYACCEPT;
+        }
+        ;
 
-bracket_expr:
-	OPENBACKET expr CLOSEBACKET
-	;
+unar_expr:
+        PLUS expr %prec IMPLICIT_MUL {
+                std::string tempStr = "+" + $2->text;
+                $$ = $2;
+                $$->left_type = TYPE_UPLUS;
+                $$->text = tempStr;
+        } |
+        MINUS expr %prec IMPLICIT_MUL {
+                std::string tempStr = "-" + $2->text;
+                $$ = $2;
+                $$->left_type = TYPE_UMINUS;
+                $$->text = tempStr;
 
-x_token:
-	X {globalEmitter->pushX();}
-	;
-
-num:
-	NUM {globalEmitter->pushNumber($1);}
-	;
-
-atom:
-    num |
-    bracket_expr |
-    x_token
-    ;
-power:
-    expr POWER atom {globalEmitter->power();}
-    ;
+                globalEmitter->pushNumber(-1);
+                globalEmitter->multiplication();
+        } |
+        expr {
+                $$ = $1;
+        }
+        ;
 
 expr:
-	expr PLUS expr {globalEmitter->addition();} |
-    expr MINUS expr {globalEmitter->substraction();} |
-    expr MUL expr {globalEmitter->multiplication();} |
-    expr DIV expr {globalEmitter->division();} |
-    power |
+        expr PLUS term {
+                std::string tempStr = $1->text + "+" + $3->text;
+                $$ = $1;
+                $$->right_type = $3->right_type;
+                $$->text = tempStr;
 
-    MINUS expr %prec IMPLICIT_MUL {
-    	globalEmitter->pushNumber(-1);
-        globalEmitter->multiplication();
-    } |
-    PLUS expr %prec IMPLICIT_MUL |
+                delete $3;
 
-    num x_token %prec IMPLICIT_MUL {
-    	globalEmitter->multiplication();
-    } |
-    power x_token %prec IMPLICIT_MUL {
-    	globalEmitter->multiplication();
-    } |
-    bracket_expr x_token %prec IMPLICIT_MUL {
-        globalEmitter->multiplication();
-    } |
-    expr bracket_expr %prec IMPLICIT_MUL {
-        globalEmitter->multiplication();
-    } |
+                globalEmitter->addition();
+        } |
+        expr MINUS term {
+                std::string tempStr = $1->text + "-" + $3->text;
+                $$ = $1;
+                $$->right_type = $3->right_type;
+                $$->text = tempStr;
 
+                delete $3;
 
-    num x_token POWER atom %prec POWER {
-        globalEmitter->power();
-        globalEmitter->multiplication();
-    } |
-    power x_token POWER atom %prec POWER {
-        globalEmitter->power();
-        globalEmitter->multiplication();
-    } |
-    bracket_expr x_token POWER atom %prec POWER {
-        globalEmitter->power();
-        globalEmitter->multiplication();
+                globalEmitter->substraction();
+        } |
+        term {
+                $$ = $1;
+        }
+        ;
+term:
+        term MUL power {
+                std::string tempStr = $1->text + "*" + $3->text;
+                $$ = $1;
+                $$->right_type = $3->right_type;
+                $$->text = tempStr;
 
-    } |
-    expr bracket_expr POWER atom %prec POWER {
-        globalEmitter->power();
-        globalEmitter->multiplication();
-    } |
+                delete $3;
 
-    bracket_expr |
-    num |
-    x_token
-    ;
+                globalEmitter->multiplication();
+        } |
+        term DIV power {
+                std::string tempStr = $1->text + "/" + $3->text;
+                $$ = $1;
+                $$->right_type = $3->right_type;
+                $$->text = tempStr;
 
+                delete $3;
+
+                globalEmitter->division();
+        } |
+        term power %prec IMPLICIT_MUL {
+                if (($2->left_type == TYPE_NUM && ($1->right_type == TYPE_X || $1->right_type == TYPE_BACKET || $1->right_type == TYPE_NUM)) ||
+                        ($1->right_type == TYPE_X && $2->left_type == TYPE_X)) {
+
+                        std::string msg = "Invalid position: \"" + $1->text + "\" and \"" + $2->text + "\". You can't use here implicit multiplication";
+                        yyerror(msg.c_str());
+                        delete $1;
+                        delete $2;
+                        YYERROR;
+                }
+
+                std::string tempStr = $1->text + $2->text;
+                $$ = $1;
+                $$->right_type = $2->right_type;
+                $$->text = tempStr;
+
+                delete $2;
+
+                globalEmitter->multiplication();
+
+        } |
+        power {
+                $$ = $1;
+        }
+        ;
+power:
+        primary POWER power {
+                std::string tempStr = $1->text + "^" + $3->text;
+                $$ = $3;
+                $$->left_type = $1->left_type;
+                $$->text = tempStr;
+
+                delete $1;
+
+                globalEmitter->power();
+        } |
+        primary {
+                $$ = $1;
+        }
+        ;
+
+primary:
+        NUM {
+                $$ = create_node(std::to_string($1).c_str());
+                $$->left_type = TYPE_NUM;
+                $$->right_type = TYPE_NUM;
+
+                globalEmitter->pushNumber($1);
+        } |
+        X {
+                $$ = create_node("x");
+                $$->left_type = TYPE_X;
+                $$->right_type = TYPE_X;
+
+                globalEmitter->pushX();
+        } |
+        OPENBACKET unar_expr CLOSEBACKET {
+                std::string tempStr = "(" + $2->text + ")";
+                $$ = $2;
+                $$->right_type = TYPE_BACKET;
+                $$->left_type = TYPE_BACKET;
+                $$->text = tempStr;
+        }
+        ;
 %%
 
 void yyerror(const char *s) {
-	std::cerr << "Parser error: " << s << "\n";
+        std::cerr << "Parser error: " << s << "\n";
 }
 
+Node* create_node(const char *s) {
+        Node* newNode = new Node();
+        newNode->text = std::string(s);
+        return newNode;
+}
